@@ -155,7 +155,14 @@ with st.sidebar:
     """, unsafe_allow_html=True)
  
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
-    st.markdown("Use the menu above to navigate between pages.", unsafe_allow_html=True)
+    st.markdown("""
+<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+<a href="." target="_self" style="padding:9px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.88rem;display:block;">🏠&nbsp; Home</a>
+<a href="./2_Upload" target="_self" style="padding:9px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.88rem;display:block;">📤&nbsp; Upload Invoices</a>
+<a href="./3_Dashboard" target="_self" style="padding:9px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.88rem;display:block;">📊&nbsp; Dashboard</a>
+<a href="./4_Forecast" target="_self" style="padding:9px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.88rem;display:block;">🔮&nbsp; Forecast</a>
+</div>
+""", unsafe_allow_html=True)
  
     st.divider()
     st.caption("Forecastly v1.0 · Phase 1")
