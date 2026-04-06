@@ -169,8 +169,7 @@ with st.sidebar:
  
     # Home button — styled distinctly as the active/current page
     st.markdown('<div class="home-btn">', unsafe_allow_html=True)
-    if st.button("🏠  Home", use_container_width=True):
-        st.switch_page("app.py")
+    st.page_link("app.py", label="🏠  Home", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
  
     pages = {
@@ -179,7 +178,7 @@ with st.sidebar:
         "🔮  Forecast":         "pages/4_Forecast.py",
     }
     for label, path in pages.items():
-        st.page_link(path, label=label)
+        st.page_link(path, label=label, use_container_width=True)
  
     st.divider()
     st.caption("Forecastly v1.0 · Phase 1")
@@ -196,4 +195,3 @@ col1, col2, col3 = st.columns(3)
 col1.info("📤 **Step 1** — Upload each invoice type separately")
 col2.info("📊 **Step 2** — View merged P&L and SKU profit")
 col3.info("🔮 **Step 3** — See 14-day sales forecast")
- 
