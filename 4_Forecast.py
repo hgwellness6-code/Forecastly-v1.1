@@ -15,16 +15,164 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame
-from utils.forecast import run_neuralprophet_forecast
-from utils.forecast import detect_anomalies, run_pycaret_forecast
-from utils.profit_calc import build_daily_trend
-from utils.forecast import (
-    run_forecast,
-    run_prophet_forecast,
-    run_xgb_forecast,
-    run_arima_forecast,
-    calculate_mape
-)
+import numpy as np
+
+# ── Inline store + profit calc (no utils/ folder needed) ─────────────────────
+STORE_KEY  = "forecastly_invoices"
+COST_TYPES = ["fba_fees","shipping","storage","advertising","returns"]
+
+def _get_store():
+    if STORE_KEY not in st.session_state:
+        st.session_state[STORE_KEY] = {}
+    return st.session_state[STORE_KEY]
+
+def load_all():
+    store = _get_store()
+    return {k: v for k, v in store.items() if v is not None and not v.empty}
+
+def _detect_amount_col(df):
+    priority = ["amount","total","value","price","revenue","sales","fee","cost","spend","net","settlement"]
+    cols_lower = {c.lower(): c for c in df.columns}
+    for kw in priority:
+        for cl, co in cols_lower.items():
+            if kw in cl:
+                try:
+                    s = df[co].astype(str).str.replace(",","").str.replace("₹","").str.strip()
+                    if pd.to_numeric(s, errors="coerce").notna().sum() > 0:
+                        return co
+                except: continue
+    return None
+
+def build_daily_trend(date_start=None, date_end=None):
+    data = load_all()
+    if not data: return pd.DataFrame()
+    records = []
+    for itype, df in data.items():
+        if df is None or df.empty or "date" not in df.columns: continue
+        df = df.copy()
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        if date_start: df = df[df["date"] >= pd.to_datetime(date_start)]
+        if date_end:   df = df[df["date"] <= pd.to_datetime(date_end)]
+        col = _detect_amount_col(df)
+        if col:
+            s = df[col].astype(str).str.replace(",","").str.replace("₹","")
+            df["amount"] = pd.to_numeric(s, errors="coerce").fillna(0)
+            df["invoice_type"] = itype
+            records.append(df[["date","invoice_type","amount"]])
+    if not records: return pd.DataFrame()
+    long = pd.concat(records, ignore_index=True)
+    long["date"] = long["date"].dt.date
+    pivot = long.groupby(["date","invoice_type"])["amount"].sum().unstack(fill_value=0)
+    for col in COST_TYPES + ["sales"]:
+        if col not in pivot.columns: pivot[col] = 0.0
+    pivot = pivot.reset_index()
+    pivot["revenue"]    = pivot.get("sales", 0)
+    pivot["total_cost"] = sum(pivot.get(c, 0) for c in COST_TYPES)
+    pivot["profit"]     = pivot["revenue"] - pivot["total_cost"]
+    return pivot.sort_values("date")
+
+# ── Inline forecast functions ─────────────────────────────────────────────────
+def _make_future_df(trend, days, predicted):
+    trend = trend.copy()
+    trend["date"] = pd.to_datetime(trend["date"])
+    trend = trend.sort_values("date")
+    hist_len = len(trend)
+    hist_pred = predicted[:hist_len] if len(predicted) >= hist_len else np.full(hist_len, np.nan)
+    last_date = trend["date"].iloc[-1]
+    future_dates = pd.date_range(last_date + pd.Timedelta(days=1), periods=days)
+    hist_df = trend[["date","revenue"]].copy()
+    hist_df.columns = ["date","actual"]
+    hist_df["predicted"] = hist_pred
+    hist_df["is_future"] = False
+    future_pred = predicted[hist_len:hist_len+days] if len(predicted) > hist_len else np.full(days, np.nan)
+    fut_df = pd.DataFrame({"date":future_dates,"actual":np.nan,"predicted":future_pred,"is_future":True})
+    return pd.concat([hist_df, fut_df], ignore_index=True)
+
+def run_forecast(trend, days=14):
+    try:
+        from sklearn.linear_model import Ridge
+        from sklearn.preprocessing import StandardScaler
+        trend = trend.copy(); trend["date"] = pd.to_datetime(trend["date"]); trend = trend.sort_values("date")
+        y = trend["revenue"].fillna(0).values; X = np.arange(len(y)).reshape(-1,1)
+        sc = StandardScaler(); X_sc = sc.fit_transform(X)
+        model = Ridge(); model.fit(X_sc, y)
+        X_full = np.arange(len(y)+days).reshape(-1,1)
+        return _make_future_df(trend, days, model.predict(sc.transform(X_full)))
+    except: return pd.DataFrame()
+
+def run_prophet_forecast(trend, days=14):
+    try:
+        from prophet import Prophet
+        trend = trend.copy(); trend["date"] = pd.to_datetime(trend["date"])
+        df_p = trend[["date","revenue"]].rename(columns={"date":"ds","revenue":"y"})
+        df_p["y"] = df_p["y"].fillna(0)
+        m = Prophet(daily_seasonality=False, weekly_seasonality=True); m.fit(df_p)
+        future = m.make_future_dataframe(periods=days); fc = m.predict(future)
+        result = _make_future_df(trend, days, fc["yhat"].values)
+        result["lower"] = np.nan; result["upper"] = np.nan
+        result.loc[result["is_future"],"lower"] = fc["yhat_lower"].values[-days:]
+        result.loc[result["is_future"],"upper"] = fc["yhat_upper"].values[-days:]
+        return result
+    except: return run_forecast(trend, days)
+
+def run_xgb_forecast(trend, days=14):
+    try:
+        import xgboost as xgb
+        trend = trend.copy(); trend["date"] = pd.to_datetime(trend["date"]); trend = trend.sort_values("date")
+        y = trend["revenue"].fillna(0).values
+        if len(y) < 8: return run_forecast(trend, days)
+        def make_features(arr):
+            return np.array([[arr[i-1],arr[i-2],arr[i-3],arr[i-7],np.mean(arr[i-7:i])] for i in range(7,len(arr))])
+        X_train = make_features(y); y_train = y[7:]
+        model = xgb.XGBRegressor(n_estimators=100,max_depth=3,learning_rate=0.1,verbosity=0)
+        model.fit(X_train, y_train)
+        history = list(y); future_preds = []
+        for _ in range(days):
+            feat = np.array([[history[-1],history[-2],history[-3],history[-7],np.mean(history[-7:])]])
+            pred = model.predict(feat)[0]; future_preds.append(pred); history.append(pred)
+        hist_p = np.concatenate([np.full(7,np.nan), model.predict(X_train)])
+        return _make_future_df(trend, days, np.concatenate([hist_p, future_preds]))
+    except: return run_forecast(trend, days)
+
+def run_arima_forecast(trend, days=14):
+    try:
+        from statsmodels.tsa.arima.model import ARIMA
+        trend = trend.copy(); trend["date"] = pd.to_datetime(trend["date"]); trend = trend.sort_values("date")
+        y = trend["revenue"].fillna(0).values
+        if len(y) < 10: return run_forecast(trend, days)
+        res = ARIMA(y, order=(2,1,2)).fit()
+        return _make_future_df(trend, days, np.concatenate([res.fittedvalues, res.forecast(steps=days)]))
+    except: return run_forecast(trend, days)
+
+def run_neuralprophet_forecast(trend, days=14):
+    try:
+        from neuralprophet import NeuralProphet
+        trend = trend.copy(); trend["date"] = pd.to_datetime(trend["date"])
+        df_np = trend[["date","revenue"]].rename(columns={"date":"ds","revenue":"y"})
+        df_np["y"] = df_np["y"].fillna(0)
+        m = NeuralProphet(epochs=50,batch_size=16,learning_rate=0.01); m.fit(df_np, freq="D")
+        fc = m.predict(m.make_future_dataframe(df_np, periods=days))
+        return _make_future_df(trend, days, fc["yhat1"].values)
+    except: return run_prophet_forecast(trend, days)
+
+def run_pycaret_forecast(trend, days=14):
+    return run_xgb_forecast(trend, days)
+
+def detect_anomalies(trend):
+    trend = trend.copy()
+    if "revenue" not in trend.columns or trend.empty:
+        trend["anomaly"] = 0; return trend
+    q1,q3 = trend["revenue"].quantile(0.25), trend["revenue"].quantile(0.75)
+    iqr = q3 - q1
+    trend["anomaly"] = ((trend["revenue"] < q1-1.5*iqr) | (trend["revenue"] > q3+1.5*iqr)).astype(int)
+    return trend
+
+def calculate_mape(actual, predicted):
+    actual = pd.to_numeric(actual, errors="coerce").fillna(0)
+    predicted = pd.to_numeric(predicted, errors="coerce").fillna(0)
+    mask = actual != 0
+    if mask.sum() == 0: return 999.0
+    return float(np.mean(np.abs((actual[mask]-predicted[mask])/actual[mask]))*100)
  
 # ─── BRAND COLORS (Light/White Theme) ────────────────────────────────────────
 BRAND_DARK    = colors.HexColor("#1E293B")       # dark text / header bg
