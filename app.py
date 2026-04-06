@@ -16,18 +16,7 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif !important;
 }
  
-/* ── Hide Streamlit's built-in top nav & sidebar header ── */
-[data-testid="stSidebarHeader"],
-[data-testid="stSidebarNav"],
-section[data-testid="stSidebar"] ul,
-nav[data-testid="stSidebarNav"] {
-    display: none !important;
-}
-/* Remove top padding left by hidden header */
-section[data-testid="stSidebar"] > div:first-child {
-    padding-top: 0 !important;
-}
- 
+
 /* Sidebar */
 section[data-testid="stSidebar"] {
     background: #080C14 !important;
@@ -166,13 +155,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
  
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
- 
-    if st.button("📤  Upload Invoices", use_container_width=True, key="nav_upload"):
-        st.switch_page("pages/2_Upload.py")
-    if st.button("📊  Dashboard", use_container_width=True, key="nav_dashboard"):
-        st.switch_page("pages/3_Dashboard.py")
-    if st.button("🔮  Forecast", use_container_width=True, key="nav_forecast"):
-        st.switch_page("pages/4_Forecast.py")
+    st.markdown("Use the menu above to navigate between pages.", unsafe_allow_html=True)
  
     st.divider()
     st.caption("Forecastly v1.0 · Phase 1")
