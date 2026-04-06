@@ -1,0 +1,19 @@
+[[pages]]
+path = "pages/1_Overview.py"
+name = "Overview"
+icon = "🏠"
+
+[[pages]]
+path = "pages/2_Upload.py"
+name = "Upload Invoices"
+icon = "📤"
+
+[[pages]]
+path = "pages/3_Dashboard.py"
+name = "Dashboard"
+icon = "📊"
+
+[[pages]]
+path = "pages/4_Forecast.py"
+name = "Forecast"
+icon = "🔮"
