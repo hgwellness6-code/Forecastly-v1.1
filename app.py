@@ -7,19 +7,17 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Define pages using st.Page (required for newer Streamlit) ────────────────
-pg_home      = st.Page("pages/1_overview.py",  title="Home",            icon="🏠", default=True)
+# ── Register pages (required in newer Streamlit — fixes the KeyError crash) ──
 pg_upload    = st.Page("pages/2_Upload.py",     title="Upload Invoices", icon="📤")
-pg_dashboard = st.Page("pages/3_Dashboard.py", title="Dashboard",       icon="📊")
-pg_forecast  = st.Page("pages/4_Forecast.py",  title="Forecast",        icon="🔮")
+pg_dashboard = st.Page("pages/3_Dashboard.py",  title="Dashboard",       icon="📊")
+pg_forecast  = st.Page("pages/4_Forecast.py",   title="Forecast",        icon="🔮")
 
-# Register all pages with navigation hidden (we draw our own sidebar nav)
 pg = st.navigation(
-    [pg_home, pg_upload, pg_dashboard, pg_forecast],
-    position="hidden",
+    [pg_upload, pg_dashboard, pg_forecast],
+    position="hidden",   # we draw our own sidebar nav below
 )
 
-# ── Global CSS ──────────────────────────────────────────────────────────────
+# ── Global CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap');
@@ -28,14 +26,13 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif !important;
 }
 
-/* ── Hide Streamlit's built-in top nav & sidebar header ── */
+/* Hide Streamlit's built-in top nav & sidebar nav */
 [data-testid="stSidebarHeader"],
 [data-testid="stSidebarNav"],
 section[data-testid="stSidebar"] ul,
 nav[data-testid="stSidebarNav"] {
     display: none !important;
 }
-/* Remove top padding left by hidden header */
 section[data-testid="stSidebar"] > div:first-child {
     padding-top: 0 !important;
 }
@@ -56,10 +53,7 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     border-bottom: 1px solid #1C2333;
     margin-bottom: 1rem;
 }
-.sidebar-logo-icon {
-    font-size: 1.6rem;
-    line-height: 1;
-}
+.sidebar-logo-icon { font-size: 1.6rem; line-height: 1; }
 .sidebar-logo-text h2 {
     margin: 0 !important;
     font-size: 1.05rem !important;
@@ -85,7 +79,7 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     margin-bottom: 0.3rem;
 }
 
-/* page_link override — match home button style */
+/* page_link styling */
 [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] {
     display: block !important;
     padding: 0.5rem 0.8rem !important;
@@ -102,6 +96,26 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     background: #0F1520 !important;
     border-color: #1C2333 !important;
     color: #E8EAF0 !important;
+}
+
+/* Home button */
+.home-btn > button {
+    background: linear-gradient(135deg, #E8452C18, #E8452C08) !important;
+    color: #E8EAF0 !important;
+    border: 1px solid #E8452C55 !important;
+    border-radius: 8px !important;
+    font-family: 'Syne', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    width: 100% !important;
+    text-align: left !important;
+    padding: 0.55rem 0.8rem !important;
+    margin-bottom: 0.25rem !important;
+    transition: all 0.2s ease !important;
+}
+.home-btn > button:hover {
+    background: linear-gradient(135deg, #E8452C30, #E8452C14) !important;
+    border-color: #E8452C99 !important;
 }
 
 /* Main bg */
@@ -122,10 +136,8 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
 }
 [data-testid="stMetricDelta"] { font-size: 0.8rem !important; }
 
-/* Dataframe */
 [data-testid="stDataFrame"] { border-radius: 10px; overflow: hidden; }
 
-/* Primary buttons */
 .stButton > button {
     background: #E8452C !important;
     color: white !important;
@@ -135,17 +147,13 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     font-weight: 600 !important;
 }
 
-/* Headings */
 h1, h2, h3 { font-family: 'Syne', sans-serif !important; font-weight: 800 !important; }
-
-/* Divider accent */
 hr { border-color: #1C2333 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Sidebar nav ─────────────────────────────────────────────────────────────
+# ── Sidebar nav ──────────────────────────────────────────────────────────────
 with st.sidebar:
-    # Logo block
     st.markdown("""
     <div class="sidebar-logo">
         <div class="sidebar-logo-icon">🔥</div>
@@ -158,14 +166,32 @@ with st.sidebar:
 
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
 
-    # Use st.Page objects — this is the fix for the KeyError crash
-    st.page_link(pg_home,      label="🏠  Home",             use_container_width=True)
-    st.page_link(pg_upload,    label="📤  Upload Invoices",  use_container_width=True)
-    st.page_link(pg_dashboard, label="📊  Dashboard",        use_container_width=True)
-    st.page_link(pg_forecast,  label="🔮  Forecast",         use_container_width=True)
+    # Home button
+    st.markdown('<div class="home-btn">', unsafe_allow_html=True)
+    if st.button("🏠  Home", use_container_width=True):
+        st.switch_page("app.py")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ✅ Pass st.Page OBJECTS — NOT string paths (this is the fix)
+    st.page_link(pg_upload,    label="📤  Upload Invoices", use_container_width=True)
+    st.page_link(pg_dashboard, label="📊  Dashboard",       use_container_width=True)
+    st.page_link(pg_forecast,  label="🔮  Forecast",        use_container_width=True)
 
     st.divider()
     st.caption("Forecastly v1.1 · Phase 1")
 
 # ── Run the selected page ────────────────────────────────────────────────────
 pg.run()
+
+# ── Home screen (shown when app.py itself is the active page) ────────────────
+st.markdown("# 🔥 Forecastly")
+st.markdown("### Amazon Invoice Intelligence System")
+st.markdown("""
+Upload your **separate Amazon invoices** (FBA Fees, Shipping, Storage, Advertising, Returns)
+and Forecastly merges them into a unified P&L, per-SKU profit breakdown, and sales forecast.
+""")
+
+col1, col2, col3 = st.columns(3)
+col1.info("📤 **Step 1** — Upload each invoice type separately")
+col2.info("📊 **Step 2** — View merged P&L and SKU profit")
+col3.info("🔮 **Step 3** — See 14-day sales forecast")
