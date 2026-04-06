@@ -167,13 +167,12 @@ with st.sidebar:
  
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
  
-    st.markdown("""
-<nav style="display:flex;flex-direction:column;gap:6px;">
-  <a href="/2_Upload"   target="_self" style="display:block;padding:10px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.9rem;">📤  Upload Invoices</a>
-  <a href="/3_Dashboard" target="_self" style="display:block;padding:10px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.9rem;">📊  Dashboard</a>
-  <a href="/4_Forecast"  target="_self" style="display:block;padding:10px 14px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;font-weight:600;font-size:0.9rem;">🔮  Forecast</a>
-</nav>
-""", unsafe_allow_html=True)
+    if st.button("📤  Upload Invoices", use_container_width=True, key="nav_upload"):
+        st.switch_page("pages/2_Upload.py")
+    if st.button("📊  Dashboard", use_container_width=True, key="nav_dashboard"):
+        st.switch_page("pages/3_Dashboard.py")
+    if st.button("🔮  Forecast", use_container_width=True, key="nav_forecast"):
+        st.switch_page("pages/4_Forecast.py")
  
     st.divider()
     st.caption("Forecastly v1.0 · Phase 1")
