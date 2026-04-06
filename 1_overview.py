@@ -23,9 +23,12 @@ else:
 
     col1, col2, col3 = st.columns(3)
 
-col1.page_link("pages/2_Upload.py", label="📤 Upload Data", use_container_width=True)
-col2.page_link("pages/3_Dashboard.py", label="📊 Dashboard", use_container_width=True)
-col3.page_link("pages/4_Forecast.py", label="📈 Forecast", use_container_width=True)
+with col1:
+    st.markdown('<a href="/2_Upload" target="_self" style="display:block;padding:10px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;text-align:center;font-weight:600;">📤 Upload Data</a>', unsafe_allow_html=True)
+with col2:
+    st.markdown('<a href="/3_Dashboard" target="_self" style="display:block;padding:10px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;text-align:center;font-weight:600;">📊 Dashboard</a>', unsafe_allow_html=True)
+with col3:
+    st.markdown('<a href="/4_Forecast" target="_self" style="display:block;padding:10px;border-radius:8px;background:#0F1520;border:1px solid #1C2333;color:#CDD1DC;text-decoration:none;text-align:center;font-weight:600;">📈 Forecast</a>', unsafe_allow_html=True)
 
 
 st.markdown("### 📁 Invoice Upload Status")
