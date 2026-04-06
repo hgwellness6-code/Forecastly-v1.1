@@ -153,7 +153,6 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
-    st.page_link("app.py",               label="🏠  Home",            use_container_width=True)
     st.page_link("pages/2_Upload.py",    label="📤  Upload Invoices", use_container_width=True)
     st.page_link("pages/3_Dashboard.py", label="📊  Dashboard",       use_container_width=True)
     st.page_link("pages/4_Forecast.py",  label="🔮  Forecast",        use_container_width=True)
