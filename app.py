@@ -7,14 +7,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Register pages (required in newer Streamlit — fixes the KeyError crash) ──
-pg_upload    = st.Page("pages/2_Upload.py",     title="Upload Invoices", icon="📤")
-pg_dashboard = st.Page("pages/3_Dashboard.py",  title="Dashboard",       icon="📊")
-pg_forecast  = st.Page("pages/4_Forecast.py",   title="Forecast",        icon="🔮")
+# ── Register pages — paths are RELATIVE TO REPO ROOT (no pages/ folder) ─────
+pg_upload    = st.Page("2_Upload.py",    title="Upload Invoices", icon="📤")
+pg_dashboard = st.Page("3_Dashboard.py", title="Dashboard",       icon="📊")
+pg_forecast  = st.Page("4_Forecast.py",  title="Forecast",        icon="🔮")
 
 pg = st.navigation(
     [pg_upload, pg_dashboard, pg_forecast],
-    position="hidden",   # we draw our own sidebar nav below
+    position="hidden",
 )
 
 # ── Global CSS ───────────────────────────────────────────────────────────────
@@ -26,7 +26,6 @@ html, body, [class*="css"] {
     font-family: 'Syne', sans-serif !important;
 }
 
-/* Hide Streamlit's built-in top nav & sidebar nav */
 [data-testid="stSidebarHeader"],
 [data-testid="stSidebarNav"],
 section[data-testid="stSidebar"] ul,
@@ -37,14 +36,12 @@ section[data-testid="stSidebar"] > div:first-child {
     padding-top: 0 !important;
 }
 
-/* Sidebar */
 section[data-testid="stSidebar"] {
     background: #080C14 !important;
     border-right: 1px solid #1C2333;
 }
 section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
 
-/* Sidebar logo block */
 .sidebar-logo {
     display: flex;
     align-items: center;
@@ -69,7 +66,6 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     font-weight: 600 !important;
 }
 
-/* Nav label */
 .nav-label {
     font-size: 0.65rem !important;
     letter-spacing: 2px !important;
@@ -79,7 +75,6 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     margin-bottom: 0.3rem;
 }
 
-/* page_link styling */
 [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] {
     display: block !important;
     padding: 0.5rem 0.8rem !important;
@@ -98,7 +93,6 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     color: #E8EAF0 !important;
 }
 
-/* Home button */
 .home-btn > button {
     background: linear-gradient(135deg, #E8452C18, #E8452C08) !important;
     color: #E8EAF0 !important;
@@ -118,11 +112,9 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     border-color: #E8452C99 !important;
 }
 
-/* Main bg */
 .main { background: #080C14; }
 .block-container { padding-top: 2rem !important; }
 
-/* Metric cards */
 [data-testid="stMetric"] {
     background: #0F1520;
     border: 1px solid #1C2333;
@@ -135,7 +127,6 @@ section[data-testid="stSidebar"] * { color: #CDD1DC !important; }
     color: #E8EAF0 !important;
 }
 [data-testid="stMetricDelta"] { font-size: 0.8rem !important; }
-
 [data-testid="stDataFrame"] { border-radius: 10px; overflow: hidden; }
 
 .stButton > button {
@@ -166,13 +157,11 @@ with st.sidebar:
 
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
 
-    # Home button
     st.markdown('<div class="home-btn">', unsafe_allow_html=True)
     if st.button("🏠  Home", use_container_width=True):
         st.switch_page("app.py")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ✅ Pass st.Page OBJECTS — NOT string paths (this is the fix)
     st.page_link(pg_upload,    label="📤  Upload Invoices", use_container_width=True)
     st.page_link(pg_dashboard, label="📊  Dashboard",       use_container_width=True)
     st.page_link(pg_forecast,  label="🔮  Forecast",        use_container_width=True)
@@ -183,7 +172,7 @@ with st.sidebar:
 # ── Run the selected page ────────────────────────────────────────────────────
 pg.run()
 
-# ── Home screen (shown when app.py itself is the active page) ────────────────
+# ── Home screen ──────────────────────────────────────────────────────────────
 st.markdown("# 🔥 Forecastly")
 st.markdown("### Amazon Invoice Intelligence System")
 st.markdown("""
