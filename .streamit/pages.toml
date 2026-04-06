@@ -1,3 +1,2 @@
-# Pages are managed by st.navigation() in app.py
-# This file is intentionally left empty
+# Intentionally empty — navigation is handled by st.navigation() in app.py
  
