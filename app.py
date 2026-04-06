@@ -143,7 +143,6 @@ hr { border-color: #1C2333 !important; }
  
 # ── Sidebar nav ─────────────────────────────────────────────────────────────
 with st.sidebar:
-    # Logo block (replaces top-left corner header)
     st.markdown("""
     <div class="sidebar-logo">
         <div class="sidebar-logo-icon">🔥</div>
@@ -153,12 +152,14 @@ with st.sidebar:
         </div>
     </div>
     """, unsafe_allow_html=True)
- 
-
- 
+    st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
+    st.page_link("app.py",               label="🏠  Home",            use_container_width=True)
+    st.page_link("pages/2_Upload.py",    label="📤  Upload Invoices", use_container_width=True)
+    st.page_link("pages/3_Dashboard.py", label="📊  Dashboard",       use_container_width=True)
+    st.page_link("pages/4_Forecast.py",  label="🔮  Forecast",        use_container_width=True)
     st.divider()
     st.caption("Forecastly v1.0 · Phase 1")
- 
+
 # ── Home screen ─────────────────────────────────────────────────────────────
 st.markdown("# 🔥 Forecastly")
 st.markdown("### Amazon Invoice Intelligence System")
