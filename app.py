@@ -167,18 +167,9 @@ with st.sidebar:
  
     st.markdown('<p class="nav-label">NAVIGATION</p>', unsafe_allow_html=True)
  
-    # Home button — styled distinctly as the active/current page
-    st.markdown('<div class="home-btn">', unsafe_allow_html=True)
-    st.page_link("app.py", label="🏠  Home", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
- 
-    pages = {
-        "📤  Upload Invoices":  "pages/2_Upload.py",
-        "📊  Dashboard":        "pages/3_Dashboard.py",
-        "🔮  Forecast":         "pages/4_Forecast.py",
-    }
-    for label, path in pages.items():
-        st.page_link(path, label=label, use_container_width=True)
+    st.page_link("pages/2_Upload.py",   label="📤  Upload Invoices", use_container_width=True)
+    st.page_link("pages/3_Dashboard.py", label="📊  Dashboard",       use_container_width=True)
+    st.page_link("pages/4_Forecast.py",  label="🔮  Forecast",        use_container_width=True)
  
     st.divider()
     st.caption("Forecastly v1.0 · Phase 1")
